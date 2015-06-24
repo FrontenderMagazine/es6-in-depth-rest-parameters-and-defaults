@@ -1,16 +1,26 @@
-<article class="post" role="article">
+# ES6 в деталях: Остаточные параметры и параметры по умолчанию
 
-_[ES6 In Depth](https://hacks.mozilla.org/category/es6-in-depth/) is a series on new features being added to the JavaScript programming language in the 6th Edition of the ECMAScript standard, ES6 for short._
+_[ES6 в деталях][1] — это цикл статей о новых возможностях языка
+программирования JavaScript, появившихся в 6 редакции стандарта ECMAScript,
+кратко — ES6._
 
-Today’s post is about two features that make JavaScript’s function syntax more expressive: rest parameters and parameter defaults.
+Сегодняшняя статья про две особенности, делающих синтаксис функций в JavaScript
+более выразительным: про остаточные параметры и параметры по умолчанию.
 
-### Rest parameters
+## Остаточные параметры
 
-A common need when creating an API is a _variadic function_, a function that accepts any number of arguments. For example, the [String.prototype.concat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/concat) method takes any number of string arguments. With rest parameters, ES6 provides a new way to write variadic functions.
+При создании API часто приходится писать _вариадические функции_, функции
+принимающие любое количество аргументов. К примеру, метод
+[String.prototype.concat][2] может принимать любое количество строковых
+аргументов. ES6 предоставляет новый способ писать вариадические функции, при
+помощи остаточных параметров.
 
-To demonstrate, let’s write a simple variadic function `containsAll` that checks whether a string contains a number of substrings. For example, `containsAll("banana", "b", "nan")` would return `true`, and `containsAll("banana", "c", "nan")` would return `false`.
+Давайте в качестве демонстрации напишем вариадическую функцию `containsAll`,
+которая проверяет, содержит ли строка некое количество подстрок. Например,
+`containsAll("банан", "б", "нан")` вернёт `true`, а
+`containsAll("банан", "в", "нан")` — `false`.
 
-Here is the traditional way to implement this function:
+Вот обычный способ реализации этой функции:
 
     function containsAll(haystack) {
       for (var i = 1; i < arguments.length; i++) {
@@ -22,7 +32,18 @@ Here is the traditional way to implement this function:
       return true;
     }
 
-This implementation uses the magical [`arguments` object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments), an array-like object containing the parameters passed to the function. This code certainly does what we want, but its readibility is not optimal. The function parameter list contains only one parameter `haystack`, so it’s impossible to tell at a glance that the function actually takes multiple arguments. Additionally, we must be careful to start iterating through `arguments` at index `1` not `0`, since `arguments[0]` corresponds to the `haystack` argument. If we ever wanted to add another parameter before or after `haystack`, we would have to remember to update the for loop. Rest parameters address both of these concerns. Here is a natural ES6 implementation of `containsAll` using a rest parameter:
+В такой реализации используется магический [объект `arguments`][3],
+массивоподобный объект, содержащий все параметры, переданные функции. Этот код
+определённо делает то, что нам нужно, но его читаемость оставляет желать
+лучшего. Список параметров функции содержит только один параметр, `haystack`,
+так что с первого взгляда непонятно, что эта функция на самом деле принимает
+множество аргументов. Вдобавок нам следует быть осторожными и не забывать, что
+начинать перебирать `arguments` следует со смещения `1`, а не `0`, потому что
+`arguments[0]` соответствует аргументу `haystack`. Если нам когда-нибудь
+захочется добавить ещё один параметр перед или после `haystack`, то нужно будет
+не забыть обновить цикл `for`. Остаточные параметры призваны обходить оба этих
+затруднения. Вот так выглядит реализация `containsAll` на настоящем[???] ES6, с
+использованием остаточного параметра:
 
     function containsAll(haystack, ...needles) {
       for (var needle of needles) {
@@ -33,75 +54,142 @@ This implementation uses the magical [`arguments` object](https://developer.mozi
       return true;
     }
 
-This version of the function has the same behavior as the first one but contains the special `...needles` syntax. Let’s see how calling this function works for the invocation `containsAll("banana", "b", "nan")`. The argument `haystack` is filled as usual with the parameter that is passed first, namely `"banana"`. The ellipsis before `needles` indicates it is a _rest parameter_. All the other passed parameters are put into an array and assigned to the variable `needles`. For our example call, `needles` is set to `["b", "nan"]`. Function execution then continues as normal. (Notice we have used the ES6 [for-of](https://hacks.mozilla.org/2015/04/es6-in-depth-iterators-and-the-for-of-loop/) looping construct.)
+У этой версии функции такое же поведение, как у первой, но в этой присутствует
+особой синтаксис `...needles`. Давайте посмотрим, как работает эта функция, если
+её вызвать как `containsAll("банан", "б", "нан")`.
+Значение аргумента `haystack`, как обычно, равно параметру, переданному первым,
+а именно, `"банан"`. Многоточие перед `needles` обозначает, что это _остаточный
+параметр_. Все остальные переданные параметры складываются в массив, и
+переменной `needles` присваивается этот массив.
+В нашем случае переменная `needles` равна `["б", "нан"]`.
+Далее выполнение функции продолжается как обычно. (Заметьте, мы использовали для
+цикла конструкцию [for-of][4] из ES6.)
 
-Only the last parameter of a function may be marked as a rest parameter. In a call, the parameters before the rest parameter are filled as usual. Any “extra” arguments are put into an array and assigned to the rest parameter. If there are no extra arguments, the rest parameter will simply be an empty array; the rest parameter will never be `undefined`.
+Только последний параметр функции может быть помечен как остаточный. При вызове
+параметры перед остаточным параметром запоняются как обычно. Все
+«дополнительные» аргументы помещаются в массив и присваиваются остаточному
+параметру. Если дополнительных аргументов нет, остаточный параметр будет просто
+пустым массивом, остаточные параметры никогда не могут быть `undefined`.
 
-### Default parameters
+## Параметры по умолчанию
 
-Often, a function doesn’t need to have all its possible parameters passed by callers, and there are sensible defaults that could be used for parameters that are not passed. JavaScript has always had a inflexible form of default parameters; parameters for which no value is passed default to `undefined`. ES6 introduces a way to specify arbitrary parameter defaults.
+Зачастую функции не нужно, чтобы все её возможные параметры передавались явно
+вызывающим кодом, и есть какие-то разумные значения по умолчанию, которые
+используются вместо тех параметров, которые не были переданы.
+В JavaScript всегда была негибкий вид параметров по умолчанию — параметры, для
+которых значение не передано, равны `undefined`. В ES6 же появилась возможность
+задавать произвольные значения по умолчанию для параметров.
 
-Here’s an example. (The backticks signify template strings, which were [discussed last week](https://hacks.mozilla.org/2015/05/es6-in-depth-template-strings-2/).)
+Вот пример. (Обратные кавычки обозначают шаблонные строки, которые мы обсуждали
+[на прошлой неделе][5].)
 
-    function animalSentence(animals2="tigers", animals3="bears") {
-        return `Lions and ${animals2} and ${animals3}! Oh my!`;
+    function animalSentence(animals2="тигры", animals3="медведи") {
+        return `Львы, и ${animals2}, и ${animals3}! О, боже мой!`;
     }
 
-For each parameter, the part after the `=` is an expression specifying the default value of the parameter if a caller does not pass it. So, `animalSentence()` returns `"Lions and tigers and bears! Oh my!"`, `animalSentence("elephants")` returns `"Lions and elephants and bears! Oh my!"`, and `animalSentence("elephants", "whales")` returns `"Lions and elephants and whales! Oh my!"`.
+В каждом из параметров часть после `=` — это выражение, определяющее значение
+параметра по умолчанию, если вызывающий код его не указал.
+Так, `animalSentence()` вернёт `"Львы, и тигры, и медведи! О, боже мой!"`,
+`animalSentence("слоны")` вернёт `"Львы, и слоны, и медведи! О, боже мой!"`, а
+`animalSentence("слоны", "киты")` вернёт
+`"Львы, и слоны, и киты! О, боже мой!"`.
 
-The are several subtleties related to default parameters:
+Есть несколько тонкостей, связанных с параметрами по умолчанию:
 
-*   Unlike Python, **default value expressions are evaluated at function call time** from left to right. This also means that default expressions can use the values of previously-filled parameters. For example, we could make our animal sentence function more fancy as follows:
+*   В отличие от Python, **выражения для определения значений по умолчанию
+    вычисляются в момент вызова функции**, слева направо.
+    Это также значит, что такие выражения могут использовать значения из
+    параметров, заполненных перед ними.
+    К примеру, мы можем сделать нашу функцию для генерации предложения о
+    животных более причудливой, вот так:
 
-        function animalSentenceFancy(animals2="tigers",
-            animals3=(animals2 == "bears") ? "sealions" : "bears")
+        function animalSentenceFancy(animals2="тигры",
+            animals3=(animals2 == "медведи") ? "морские львы" : "медведи")
         {
-          return `Lions and ${animals2} and ${animals3}! Oh my!`;
+          return `Львы, и ${animals2}, и ${animals3}! О, боже мой!`;
         }
 
-    Then, `animalSentenceFancy("bears")` returns `"Lions and bears and sealions. Oh my!"`.
+    И `animalSentenceFancy("медведи")` вернёт
+    `Львы, и медведи, и морские львы! О, боже мой!`
 
-*   Passing `undefined` is considered to be equivalent to not passing anything at all. Thus, `animalSentence(undefined, "unicorns")` returns `"Lions and tigers and unicorns! Oh my!"`.
-*   A parameter without a default implicitly defaults to undefined, so
+*   Если функции без передан `undefined`, то это считается эквивалентным тому,
+    что мы вообще ничего не передали. Таким образом,
+    `animalSentence(undefined, "единороги")` вернёт
+    `"Львы, и тигры, и единороги! О, боже мой!"`.
+
+*   У параметра, которому не указано значение по умолчанию, оно неявно равно
+    `undefined`. То есть,
 
         function myFunc(a=42, b) {...}
 
-    is allowed and equivalent to
+    допустимо и эквивалентно
 
         function myFunc(a=42, b=undefined) {...}
 
-### Shutting down `arguments`
+## Закругляемся с `arguments`
 
-We’ve now seen that rest parameters and defaults can replace usage of the `arguments` object, and removing `arguments` usually makes the code nicer to read. In addition to harming readibility, the magic of the `arguments` object notoriously causes [headaches for optimizing JavaScript VMs](https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#3-managing-arguments).
+Мы увидели, как остаточные параметры и значения по умолчанию могут заменить
+использование объекта `arguments`, и как код, где убран `arguments`, обычно
+приятнее читать.
+Вдобавок к ухудшению читаемости кода, хорошо известно, что магическая сущность
+объекта `arguments` вызывает головную боль при оптимизации виртуальных машин
+[JavaScript][6].
 
-It is hoped that rest parameters and defaults can completely supersede `arguments`. As a first step towards this, functions that use a rest parameter or defaults are forbidden from using the `arguments` object. Support for `arguments` won’t be removed soon, if ever, but it’s now preferable to avoid `arguments` with rest parameters and defaults when possible.
+Есть надежда, что остаточные параметры и значения по умолчанию полностью
+вытеснят `arguments` из обращения. В качестве первого шага к этому функциям,
+использующим остаточные параметры или умолчания, запрещено обращаться к объекту
+`arguments`. Поддержку `arguments` уберут нескоро, если вообще уберут, но
+теперь предпочтительно избегать `arguments` и пользоваться остаточными
+параметрами и умолчаниями когда это возможно.
 
-### Browser support
+## Поддержка браузерами
 
-Firefox has had support for rest parameters and defaults since version 15.
+В Firefox поддержка остаточных параметров и значений по умолчанию есть ещё с
+версии 15.
 
-Unfortunately, no other released browser supports rest parameters or defaults yet. V8 recently [added experimental support for rest parameters](https://code.google.com/p/v8/issues/detail?id=2159), and there is an open V8 [issue for implementing defaults](https://code.google.com/p/v8/issues/detail?id=2160). JSC also has open issues for [rest parameters](https://bugs.webkit.org/show_bug.cgi?id=38408) and [defaults](https://bugs.webkit.org/show_bug.cgi?id=38409).
+К сожалению, пока нет других браузеров, поддерживающих их. В V8 недавно была
+[добавлена экспериментальная поддержка остаточных параметров][7], и есть
+открытая [задача реализовать умолчания][8].
+В JC также поставлены задачи на [остаточные параметры][9] и [умолчания][10].
 
-The [Babel](http://babeljs.io/) and [Traceur](https://github.com/google/traceur-compiler#what-is-traceur) compilers both support default parameters, so it is possible to start using them today.
+Компиляторы [Babel][11] и [Traceur][12] оба поддерживают параметры по умолчанию,
+так что можно начинать пользоваться ими уже сегодня.
 
-### Conclusion
+## Заключение
 
-Although technically not allowing any new behavior, rest parameters and parameter defaults can make some JavaScript function declarations more expressive and readable. Happy calling!
+Хотя остаточные параметры и параметры по умолчанию и не являются с технической
+стороны каким-то новым повдением, они могут сделать сигнатуры функций JavaScript
+более выразительными и читаемыми. Счастливого программирования!
 
 * * *
 
-_Note: Thanks to Benjamin Peterson for implementing these features in Firefox, for all his contributions to the project, and of course for this week’s post._
+_Прим.: Спасибо Бенджамину Петерсону (Benjamin Peterson) за реализацию этой
+функциональности в Firefox, за весь его вклад в проект и, конечно, за статью
+этой недели._
 
-Next week, we’ll introduce another simple, elegant, practical, everyday ES6 feature. It takes the familiar syntax you already use to write arrays and objects, and turns it on its head, producing a new, concise way to _take arrays and objects apart._ What does that mean? Why would you want to take an object apart? Join us next Thursday to find out, as Mozilla engineer [Nick Fitzgerald](https://twitter.com/fitzgen) presents ES6 destructuring in depth.
+На следующей неделе мы познакомимся с другой простой и практичной возможностью
+ES6, которую можно использовать в повседневности. Она берёт знакомый синтаксис,
+которым вы уже пользуетесь для создания массивов и объектов, и переворачивает
+его с ног на голову, предоставляя новый, лаконичный способ _разбирать массивы
+и объекты на части_. Что это значит? Зачем бы нам вдруг хотеть разобрать объект
+на части? Присоединяйтесь к нам в следующий четверг и узнаете. Инженер
+Mozilla [Ник Фицджеральд (Nick Fitzgerald)][13] представит деструктурирование
+в ES6 в деталях.
 
-Jason Orendorff
+Джейсон Орендорфф
 
-[ES6 In Depth](https://hacks.mozilla.org/category/es6-in-depth/ "ES6 In Depth") editor
+Редактор [ES6 в детялях][1].
 
-<footer class="entry-meta">
-
-Posted by [Benjamin Peterson](https://hacks.mozilla.org/author/bpbenjamin-pe/ "Posts by Benjamin Peterson") on <time datetime="2015-05-21T13:32:10-07:00">May 21, 2015</time> at <time datetime="PDT13:32:10-07:00">13:32</time>
-
-</footer>
-
-</article>
+ [1]: https://hacks.mozilla.org/category/es6-in-depth/
+ [2]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/concat
+ [3]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+ [4]: http://frontender.info/es6-in-depth-iterators-and-the-for-of-loop/
+ [5]: http://frontender.info/es6-in-depth-template-strings/
+ [6]: https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#3-managing-arguments
+ [7]: https://code.google.com/p/v8/issues/detail?id=2159
+ [8]: https://code.google.com/p/v8/issues/detail?id=2160
+ [9]: https://bugs.webkit.org/show_bug.cgi?id=38408
+ [10]: https://bugs.webkit.org/show_bug.cgi?id=38409
+ [11]: http://babeljs.io/
+ [12]: https://github.com/google/traceur-compiler#what-is-traceur
+ [13]: https://twitter.com/fitzgen
